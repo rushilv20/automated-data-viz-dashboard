@@ -26,27 +26,36 @@ try:
     # Navigate to the login URL
     driver.get(login_url)
 
-    # Find the username and password input fields and submit button
-    username_field = driver.find_element(By.ID, "user_email")  # Replace with the appropriate locator
-    password_field = driver.find_element(By.ID, "user_password")  # Replace with the appropriate locator
+    # Find the email input field and submit button on the first page
+    email_field = driver.find_element(By.ID, "user_email")  # Replace with the appropriate locator
+    next_button = driver.find_element(By.CLASS_NAME, "pull-right")  # Replace with the appropriate locator
+
+    # Fill in the email address
+    email_field.send_keys(username)
+
+    # Click the next button to proceed to the password page
+    next_button.click()
+
+    # Wait for the password field to be present on the second page
+    password_field = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.ID, "user_password"))  # Replace with the appropriate locator
+    )
+
+    # Find the submit button on the password page
     submit_button = driver.find_element(By.CLASS_NAME, "pull-right")  # Replace with the appropriate locator
 
-    # Fill in the login credentials
-    username_field.send_keys(username)
+    # Fill in the password
     password_field.send_keys(password)
 
     # Click the submit button to log in
     submit_button.click()
 
+    time.sleep(5)
+
     # Wait for the login to complete and navigate to the Excel download page
     driver.get(excel_url)
 
     time.sleep(10)
-
-    # # Wait for the data to load (adjust the timeout as needed)
-    # data_loaded = WebDriverWait(driver, 15).until(
-    #     EC.presence_of_element_located((By.CLASS_NAME, "dataTables_wrapper"))
-    # )
 
     # Wait for the Excel download button to be present
     excel_button = WebDriverWait(driver, 10).until(
@@ -66,5 +75,4 @@ except Exception as e:
     print(e)
 
 finally:
-    # Close the browser
     driver.quit()
