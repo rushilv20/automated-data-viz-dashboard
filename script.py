@@ -1,3 +1,5 @@
+import os
+import boto3
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -5,74 +7,94 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 from selenium.webdriver.chrome.options import Options
 
-chrome_options = Options()
-chrome_options.add_argument('--ignore-certificate-errors')
-# driver = webdriver.Chrome(options=chrome_options)
+def lambda_handler(event, context):
+    chrome_options = Options()
+    chrome_options.binary_location = '/opt/headless-chromium'
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--single-process')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    
 
-# Jetinsight login credentials
-username = "rvegada@flybellair.com"
-password = "Rushil@201220"
+    # Jetinsight login credentials
+    username = "rvegada@flybellair.com"
+    password = "Rushil@201220"
 
-# Jetinsight login URL
-login_url = "https://portal.jetinsight.com/users/sign_in"
+    # Jetinsight login URL
+    login_url = "https://portal.jetinsight.com/users/sign_in"
 
-# URL of the page with the Excel download button
-excel_url = "https://portal.jetinsight.com/analytics/trip_finance?stage=&search=&date_to_filter=depart_date_zulu&search_startdate=04%2F01%2F2024&search_enddate=04%2F25%2F2024&query_builder_json="
+    # URL of the page with the Excel download button
+    excel_url = "https://portal.jetinsight.com/analytics/trip_finance?stage=&search=&date_to_filter=depart_date_zulu&search_startdate=04%2F01%2F2024&search_enddate=05%2F25%2F2024&query_builder_json="
 
-# Create a new instance of the Chrome driver
-driver = webdriver.Chrome()
+    # Create a new instance of the Chrome driver
+    driver = webdriver.Chrome('/opt/chromedriver', chrome_options=chrome_options)
 
-try:
-    # Navigate to the login URL
-    driver.get(login_url)
+    try:
+        # Navigate to the login URL
+        driver.get(login_url)
 
-    # Find the email input field and submit button on the first page
-    email_field = driver.find_element(By.ID, "user_email")  # Replace with the appropriate locator
-    next_button = driver.find_element(By.CLASS_NAME, "pull-right")  # Replace with the appropriate locator
+        # Find the email input field and submit button on the first page
+        email_field = driver.find_element(By.ID, "user_email")
+        next_button = driver.find_element(By.CLASS_NAME, "pull-right")
 
-    # Fill in the email address
-    email_field.send_keys(username)
+        # Fill in the email address
+        email_field.send_keys(username)
 
-    # Click the next button to proceed to the password page
-    next_button.click()
+        # Click the next button to proceed to the password page
+        next_button.click()
 
-    # Wait for the password field to be present on the second page
-    password_field = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.ID, "user_password"))  # Replace with the appropriate locator
-    )
+        # Wait for the password field to be present on the second page
+        password_field = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "user_password"))
+        )
 
-    # Find the submit button on the password page
-    submit_button = driver.find_element(By.CLASS_NAME, "pull-right")  # Replace with the appropriate locator
+        # Find the submit button on the password page
+        submit_button = driver.find_element(By.CLASS_NAME, "pull-right")
 
-    # Fill in the password
-    password_field.send_keys(password)
+        # Fill in the password
+        password_field.send_keys(password)
 
-    # Click the submit button to log in
-    submit_button.click()
+        # Click the submit button to log in
+        submit_button.click()
 
-    time.sleep(5)
+        time.sleep(5)
 
-    # Wait for the login to complete and navigate to the Excel download page
-    driver.get(excel_url)
+        # Wait for the login to complete and navigate to the Excel download page
+        driver.get(excel_url)
 
-    time.sleep(10)
+        time.sleep(10)
 
-    # Wait for the Excel download button to be present
-    excel_button = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "buttons-excel"))
-    )
+        # Wait for the Excel download button to be present
+        excel_button = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "buttons-excel"))
+        )
 
-    # Click the Excel download button
-    excel_button.click()
+        # Click the Excel download button
+        excel_button.click()
 
-    # Wait for the file to be downloaded (adjust the timeout as needed)
-    time.sleep(7)
+        # Wait for the file to be downloaded (adjust the timeout as needed)
+        time.sleep(7)
 
-    print("Excel file downloaded successfully!")
+        # # Find the most recently downloaded file in the /tmp directory
+        # tmp_dir = '/tmp'
+        # files = os.listdir(tmp_dir)
+        # files = [f for f in files if os.path.isfile(os.path.join(tmp_dir, f))]
+        # newest_file = max(files, key=lambda x: os.path.getmtime(os.path.join(tmp_dir, x)))
 
-except Exception as e:
-    print("An error occurred during the process:")
-    print(e)
+        # # Upload the most recently downloaded file to S3
+        # s3 = boto3.client('s3')
+        # file_path = os.path.join(tmp_dir, newest_file)
+        # bucket_name = 'bellairdatabucket'  # Replace with your S3 bucket name
+        # s3.upload_file(file_path, bucket_name, newest_file)
 
-finally:
-    driver.quit()
+        # print(f"File '{newest_file}' uploaded to S3 successfully!")
+
+        return "Execution completed successfully"
+
+    except Exception as e:
+        print("An error occurred during the process:")
+        print(e)
+        return "An error occurred during execution"
+
+    finally:
+        driver.quit()
