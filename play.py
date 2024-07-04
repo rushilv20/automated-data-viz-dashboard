@@ -1,14 +1,12 @@
 import os
 import boto3
-from playwright.sync_api import sync_playwright
+import glob
+from playwright.sync_api import sync_playwright, TimeoutError
+from datetime import datetime
 
 # Your credentials
 username = "rvegada@flybellair.com"
 password = "Rushil@201220"
-
-# URLs
-login_url = "https://portal.jetinsight.com/users/sign_in"
-excel_url = "https://portal.jetinsight.com/analytics/trip_finance?stage=&search=&date_to_filter=depart_date_zulu&search_startdate=06%2F01%2F2024&search_enddate=06%2F25%2F2024&query_builder_json="
 
 # Set AWS credentials
 os.environ['AWS_ACCESS_KEY_ID'] = 'AKIATCKAMY4NZ77DVGVP'
@@ -17,74 +15,107 @@ os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
 
 # S3 bucket name
 bucket_name = 'bellairdatabucket'
+def encode_date(date_string):
+    return date_string.replace('/', '%2F')
+
+def generate_url(file_type, start_date, end_date):
+    base_url = "https://portal.jetinsight.com/"
+    
+    encoded_start_date = encode_date(start_date)
+    encoded_end_date = encode_date(end_date)
+
+    if file_type == 'logged_flights':
+        url = f"{base_url}analytics/logged_flights?search_aircraft=all_active&search=&search_startdate={encoded_start_date}&search_enddate={encoded_end_date}&query_builder_json="
+    elif file_type == 'trip_finance':
+        url = f"{base_url}analytics/trip_finance?stage=&search=&date_to_filter=depart_date_zulu&search_startdate={encoded_start_date}&search_enddate={encoded_end_date}&query_builder_json="
+    elif file_type == 'quickbooks_desktop_export':
+        url = f"{base_url}accounting/quickbooks_desktop_export?date_to_filter=depart_date_zulu&search=&search_startdate={encoded_start_date}&search_enddate={encoded_end_date}"
+    else:
+        url = "Invalid file type selected."
+
+    return url
+
+# Variables for input (you can modify these as needed)
+file_type = 'trip_finance'  # Options: 'logged_flights', 'trip_finance', 'quickbooks_desktop_export'
+start_date = '06/01/2024'
+end_date = '06/30/2024'
+
+# Generate and print the URL
+url = generate_url(file_type, start_date, end_date)
+
+# URLs
+login_url = "https://portal.jetinsight.com/users/sign_in"
+excel_url = url
+
+import time
 
 def lambda_handler():
-    # Initialize Playwright and the browser
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=False)
         context = browser.new_context()
         page = context.new_page()
-
-        # Navigate to the login URL
-        page.goto(login_url)
-        print("Navigated to login page")
-
-        # Fill in the email address and click the next button
-        page.fill("#user_email", username)
-        page.click(".pull-right")
-        print("Entered username and clicked next")
-
-        # Wait for the password field to appear and fill it in
-        try:
-            page.wait_for_selector("#user_password", timeout=25000)  # Timeout set to 5000 milliseconds
-            print("Password field appeared")
-        except Exception as e:
-            print(f"Error waiting for password field: {e}")
-            raise e
-
-        page.fill("#user_password", password)
-        page.click(".pull-right")
-        print("Entered password and clicked login")
-
-        # Wait for the login to complete and navigate to the Excel download page
-        page.wait_for_timeout(15000)
-        page.goto(excel_url)
-        print("Navigated to Excel download page")
-
-        # Wait for the Excel download button to appear and click it
-        try:
-            page.wait_for_selector(".buttons-excel", timeout=25000)
-            print("Excel download button appeared")
-        except Exception as e:
-            print(f"Error waiting for Excel download button: {e}")
-            raise e
         
-        
+        try:
+            # Go to login page
+            page.goto(login_url, timeout=30000)
+            print("Navigated to login page")
 
-        # Handle the download
-        with page.expect_download() as download_info:
-            page.click(".buttons-excel")
-        download = download_info.value
+            # Enter email and submit
+            page.fill("#user_email", username)
+            page.click("button[type='submit']")
+            print("Entered email")
+            
+            # Wait for potential CAPTCHA or password field to appear
+            time.sleep(20)  # Adjust this time as needed
+            print("Waited for potential CAPTCHA")
 
-        # Save the downloaded file to the specified download path
-        download_path = '/tmp'
-        download.save_as(os.path.join(download_path, download.suggested_filename))
-        print(f"Downloaded file saved to {os.path.join(download_path, download.suggested_filename)}")
+            # Enter password and submit
+            page.fill("#user_password", password)
+            page.click("button[type='submit']")
+            print("Entered password")
 
-        # Find the most recently downloaded file in the specified download directory
-        files = os.listdir(download_path)
-        files = [f for f in files if os.path.isfile(os.path.join(download_path, f))]
-        newest_file = max(files, key=lambda x: os.path.getmtime(os.path.join(download_path, x)))
-        file_path = os.path.join(download_path, newest_file)
+            # Wait for login to complete and potential redirect
+            time.sleep(15)
+            print("Waited for login to complete")
 
-        # Initialize a session using Amazon S3
-        s3 = boto3.client('s3')
+            # Navigate to Excel download page
+            page.goto(excel_url, timeout=10000)
+            print("Navigated to Excel download page")
 
-        # Upload the most recently downloaded file to S3
-        s3.upload_file(file_path, bucket_name, newest_file)
-        print(f"File '{newest_file}' uploaded to S3 bucket '{bucket_name}' successfully!")
+            # Wait for page to load and potential animations to finish
+            time.sleep(5)
 
-        # Close the browser
-        browser.close()
+            # Click the Excel download button
+            try:
+                download_button = page.wait_for_selector(".buttons-excel", state="visible", timeout=60000)
+                
+                with page.expect_download() as download_info:
+                    download_button.click()
+                download = download_info.value
+
+                # Save the downloaded file
+                download_path = '/tmp'
+                file_path = os.path.join(download_path, download.suggested_filename)
+                download.save_as(file_path)
+
+                # Get the most recent file from the download directory
+                list_of_files = glob.glob(os.path.join(download_path, '*'))
+                latest_file = max(list_of_files, key=os.path.getctime)
+
+                # Upload to S3
+                s3 = boto3.client('s3')
+                s3_filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{os.path.basename(latest_file)}"
+                s3.upload_file(latest_file, bucket_name, s3_filename)
+                print(f"File successfully uploaded to S3: {s3_filename}")
+            
+            except TimeoutError:
+                print("Excel download button not found within the timeout period.")
+            except Exception as e:
+                print(f"An error occurred during download or upload: {str(e)}")
+
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+        finally:
+            browser.close()
 
 lambda_handler()
