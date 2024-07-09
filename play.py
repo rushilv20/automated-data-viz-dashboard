@@ -5,8 +5,8 @@ from playwright.sync_api import sync_playwright, TimeoutError
 from datetime import datetime
 
 # Your credentials
-username = "rvegada@flybellair.com"
-password = "Rushil@201220"
+username = ""
+password = ""
 
 # Set AWS credentials
 os.environ['AWS_ACCESS_KEY_ID'] = 'AKIATCKAMY4NZ77DVGVP'
