@@ -15,8 +15,8 @@ AWS_DEFAULT_REGION = 'us-east-1'
 DYNAMODB_TABLE_NAME = 'Trip-Finances'
 
 # Portal credentials
-USERNAME = "rvegada@flybellair.com"
-PASSWORD = "Rushil@201220"
+USERNAME = ""
+PASSWORD = ""
 
 # URL generation
 def encode_date(date_string):
