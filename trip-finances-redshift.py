@@ -3,16 +3,25 @@ import boto3
 from playwright.sync_api import sync_playwright, TimeoutError
 from datetime import datetime
 import pandas as pd
-from decimal import Decimal, InvalidOperation
-import glob
-import math
-import concurrent.futures
+import psycopg2
+from botocore.exceptions import ClientError
 
-# AWS and credentials setup
+# AWS credentials setup
 AWS_ACCESS_KEY_ID = 'AKIATCKAMY4NZ77DVGVP'
 AWS_SECRET_ACCESS_KEY = '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'
 AWS_DEFAULT_REGION = 'us-east-1'
-DYNAMODB_TABLE_NAME = 'Trip-Finances'
+
+# Set up boto3 session
+boto3.setup_default_session(
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    region_name=AWS_DEFAULT_REGION
+)
+
+# Redshift Serverless connection details
+REDSHIFT_WORKGROUP_ENDPOINT = 'bellair.211125323547.us-east-1.redshift-serverless.amazonaws.com'
+REDSHIFT_PORT = 5439
+REDSHIFT_DB = 'dev'
 
 # Portal credentials
 USERNAME = "rvegada@flybellair.com"
@@ -48,52 +57,65 @@ def safe_currency_to_float(value):
             return None
     return None
 
-def float_to_decimal(value):
-    if value is None or math.isnan(value):
-        return None
-    if math.isinf(value):
-        return Decimal(str(1e30))
-    try:
-        return Decimal(str(value))
-    except InvalidOperation:
-        return None
-
 def process_dataframe(df):
     df['Cost'] = df['Cost'].apply(safe_currency_to_float)
     df['Price'] = df['Price'].apply(safe_currency_to_float)
     return df
 
-# DynamoDB operations
-def upload_to_dynamodb(items):
-    dynamodb = boto3.resource('dynamodb', 
-                              aws_access_key_id=AWS_ACCESS_KEY_ID,
-                              aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-                              region_name=AWS_DEFAULT_REGION)
-    table = dynamodb.Table(DYNAMODB_TABLE_NAME)
-    
-    with table.batch_writer() as batch:
-        for item in items:
-            batch.put_item(Item=item)
+# Redshift operations
+def get_redshift_credentials():
+    client = boto3.client('redshift-serverless', region_name=AWS_DEFAULT_REGION)
+    try:
+        response = client.get_credentials(
+            workgroupName='bellair',
+            durationSeconds=3600  # Credentials valid for 1 hour
+        )
+        return response['dbUser'], response['dbPassword']
+    except ClientError as e:
+        print(f"Error getting Redshift credentials: {e}")
+        return None, None
 
-def prepare_items_for_dynamodb(df):
-    items = []
-    for _, row in df.iterrows():
-        item = {}
-        for column, value in row.items():
-            if isinstance(value, float):
-                item[column] = float_to_decimal(value)
-            elif pd.isna(value):
-                item[column] = None
-            else:
-                item[column] = value
-        items.append(item)
-    return items
+def upload_to_redshift(df):
+    db_user, db_password = get_redshift_credentials()
+    if not db_user or not db_password:
+        print("Failed to get Redshift credentials")
+        return
+
+    conn = psycopg2.connect(
+        host=REDSHIFT_WORKGROUP_ENDPOINT,
+        port=REDSHIFT_PORT,
+        dbname=REDSHIFT_DB,
+        user=db_user,
+        password=db_password
+    )
+    cursor = conn.cursor()
+
+    try:
+        # Prepare the data for insertion
+        data = [tuple(x) for x in df.to_numpy()]
+        
+        # Generate the INSERT statement
+        columns = ', '.join(df.columns)
+        placeholders = ', '.join(['%s'] * len(df.columns))
+        insert_query = f"INSERT INTO bellair.trip-finances ({columns}) VALUES ({placeholders})"
+        
+        # Execute the INSERT statement
+        cursor.executemany(insert_query, data)
+        conn.commit()
+        
+        print(f"Data successfully uploaded to Redshift table: bellair.trip_finances")
+    except Exception as e:
+        conn.rollback()
+        print(f"An error occurred while uploading to Redshift: {str(e)}")
+    finally:
+        cursor.close()
+        conn.close()
 
 # Main function
 def lambda_handler():
-    file_type = 'trip_finance' #trip_finance, logged_flights, quickbooks_desktop_export
-    start_date = '07/01/2024'
-    end_date = '07/21/2024'
+    file_type = 'trip_finance'
+    start_date = '01/01/2023'
+    end_date = '01/31/2023'
     login_url = "https://portal.jetinsight.com/users/sign_in"
     excel_url = generate_url(file_type, start_date, end_date)
 
@@ -101,6 +123,7 @@ def lambda_handler():
         browser = p.chromium.launch(headless=False)
         context = browser.new_context()
         page = context.new_page()
+        
         try:
             # Login
             page.goto(login_url, timeout=30000)
@@ -123,15 +146,9 @@ def lambda_handler():
             # Process Excel file
             df = pd.read_excel(file_path)
             df = process_dataframe(df)
-            items = prepare_items_for_dynamodb(df)
 
-            # Upload to DynamoDB in parallel
-            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                chunk_size = 100
-                chunks = [items[i:i + chunk_size] for i in range(0, len(items), chunk_size)]
-                executor.map(upload_to_dynamodb, chunks)
-
-            print(f"Data successfully appended to DynamoDB table: {DYNAMODB_TABLE_NAME}")
+            # Upload to Redshift
+            upload_to_redshift(df)
 
             # Clean up
             os.remove(file_path)

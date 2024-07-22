@@ -67,9 +67,6 @@ def process_dataframe(df):
     logger.info(f"Original DataFrame shape: {df.shape}")
     logger.info(f"Original DataFrame columns: {df.columns}")
     
-    # Create the new Orig_Dest_StartZ column
-    df['Orig_Dest_StartZ'] = df['Orig'] + '#' + df['Dest'] + '#' + df['Start Z']
-    
     # Convert numeric columns to float
     numeric_columns = ['Pax', 'Block hrs', 'Flight hrs', 'Hobbs hrs']
     for col in numeric_columns:
@@ -78,9 +75,25 @@ def process_dataframe(df):
         else:
             logger.warning(f"Column {col} not found in DataFrame")
     
-    logger.info(f"Processed DataFrame shape: {df.shape}")
-    logger.info(f"Sample of processed DataFrame:\n{df.head()}")
-    return df
+    # Create the new partition key column
+    df['Trip_info'] = (
+        df['Trip'].astype(str) + '#' +
+        df['Aircraft'].astype(str) + '#' +
+        df['Orig'].astype(str) + '#' +
+        df['Dest'].astype(str) + '#' +
+        df['Start Z'].astype(str) + '#' +
+        df['Block hrs'].astype(str) + '#' +
+        df['Flight hrs'].astype(str) + '#' +
+        df['Hobbs hrs'].astype(str)
+    )
+    
+    # Remove duplicates based on PartitionKey
+    df_deduplicated = df.drop_duplicates(subset=['Trip_info'], keep='first')
+    
+    logger.info(f"Processed DataFrame shape: {df_deduplicated.shape}")
+    logger.info(f"Sample of processed DataFrame:\n{df_deduplicated.head()}")
+    
+    return df_deduplicated
 
 def prepare_items_for_dynamodb(df):
     items = []
@@ -115,8 +128,8 @@ def upload_to_dynamodb(items):
 # Main function
 def lambda_handler():
     file_type = 'logged_flights'
-    start_date = '01/01/2023'
-    end_date = '01/31/2023'
+    start_date = '07/01/2023'
+    end_date = '07/21/2024'
     login_url = "https://portal.jetinsight.com/users/sign_in"
     excel_url = generate_url(file_type, start_date, end_date)
 
@@ -137,7 +150,7 @@ def lambda_handler():
 
             # Download Excel
             page.goto(excel_url, timeout=10000)
-            page.wait_for_timeout(30000)
+            page.wait_for_timeout(40000)
             with page.expect_download() as download_info:
                 page.click(".buttons-excel")
             download = download_info.value
@@ -150,12 +163,6 @@ def lambda_handler():
             logger.info(f"Excel file read. Shape: {df.shape}")
             df = process_dataframe(df)
             
-            # Check for duplicates
-            duplicates = df[df.duplicated(subset=['Trip', 'Orig_Dest_StartZ'], keep=False)]
-            if not duplicates.empty:
-                logger.warning(f"Found {len(duplicates)} duplicate entries for Trip and Orig_Dest_StartZ combinations")
-                logger.warning("Sample duplicates:\n", duplicates.head())
-
             items = prepare_items_for_dynamodb(df)
 
             # Upload to DynamoDB in parallel
@@ -171,17 +178,7 @@ def lambda_handler():
                                     region_name=AWS_DEFAULT_REGION)
             table = dynamodb.Table(DYNAMODB_TABLE_NAME)
 
-            # for item in items:
-            #     try:
-            #         table.put_item(Item=item)
-            #     except Exception as e:
-            #         logger.error(f"Error uploading item to DynamoDB: {str(e)}")
-            #         logger.error(f"Problematic item: {item}")
-            #         logger.error(f"Trip type: {type(item['Trip'])}, Orig_Dest_StartZ type: {type(item['Orig_Dest_StartZ'])}")
-            #         logger.error(f"Trip value: '{item['Trip']}', Orig_Dest_StartZ value: '{item['Orig_Dest_StartZ']}'")
-
             logger.info(f"Data upload to DynamoDB table {DYNAMODB_TABLE_NAME} completed")
-
 
             item_count = table.item_count
             logger.info(f"Items in DynamoDB table after upload: {item_count}")
