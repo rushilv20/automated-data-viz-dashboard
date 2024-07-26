@@ -3,7 +3,12 @@ const cors = require('cors'); // Import cors
 const app = express();
 const dataRoutes = require('./routes/dashboard');
 
-app.use(cors()); // Use cors middleware to handle CORS headers
+const corsOptions = {
+    origin: 'https://dashboard.d15p3i91pmeilq.amplifyapp.com/', // Update this with your Amplify app domain
+    optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/api', dataRoutes);
 
