@@ -94,7 +94,7 @@ def prepare_items_for_dynamodb(df):
 def lambda_handler():
     file_type = 'quickbooks_desktop_export' #trip_finance, logged_flights, quickbooks_desktop_export
     start_date = '07/01/2024'
-    end_date = '07/21/2024'
+    end_date = '07/23/2024'
     login_url = "https://portal.jetinsight.com/users/sign_in"
     excel_url = generate_url(file_type, start_date, end_date)
 
