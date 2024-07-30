@@ -41,8 +41,13 @@ const matchInvoices = (flights, invoices) => {
     invoices.forEach(invoice => {
         const flight = flights[invoice.Trip];
         if (flight) {
+            // Calculate total flight hours for the trip
+            const totalFlightHrs = flight.TotalFlightHrs;
+            // Distribute price proportionally to each date
             Object.keys(flight.Dates).forEach(date => {
-                flight.Dates[date].Price += parseFloat(invoice.Price);
+                const dateData = flight.Dates[date];
+                const proportion = dateData.FlightHrs / totalFlightHrs;
+                dateData.Price += proportion * parseFloat(invoice.Price);
             });
         }
     });
@@ -57,7 +62,14 @@ const organizeDataByAircraft = flights => {
             aircraftData[Aircraft] = {};
         }
         Object.entries(Dates).forEach(([date, data]) => {
-            aircraftData[Aircraft][date] = data;
+            if (data.FlightHrs > 0 && !isNaN(data.FlightHrs) && data.Price > 0 && !isNaN(data.Price)) {
+                if (!aircraftData[Aircraft][date]) {
+                    aircraftData[Aircraft][date] = data;
+                } else {
+                    aircraftData[Aircraft][date].FlightHrs += data.FlightHrs;
+                    aircraftData[Aircraft][date].Price += data.Price;
+                }
+            }
         });
     });
     return aircraftData;

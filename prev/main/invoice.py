@@ -4,7 +4,6 @@ from playwright.sync_api import sync_playwright, TimeoutError
 from datetime import datetime
 import pandas as pd
 from decimal import Decimal, InvalidOperation
-import glob
 import math
 import concurrent.futures
 
@@ -12,7 +11,7 @@ import concurrent.futures
 AWS_ACCESS_KEY_ID = 'AKIATCKAMY4NZ77DVGVP'
 AWS_SECRET_ACCESS_KEY = '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'
 AWS_DEFAULT_REGION = 'us-east-1'
-DYNAMODB_TABLE_NAME = 'Trip-Finances'
+DYNAMODB_TABLE_NAME = 'Invoices'
 
 # Portal credentials
 USERNAME = "rvegada@flybellair.com"
@@ -59,7 +58,6 @@ def float_to_decimal(value):
         return None
 
 def process_dataframe(df):
-    df['Cost'] = df['Cost'].apply(safe_currency_to_float)
     df['Price'] = df['Price'].apply(safe_currency_to_float)
     return df
 
@@ -78,22 +76,25 @@ def upload_to_dynamodb(items):
 def prepare_items_for_dynamodb(df):
     items = []
     for _, row in df.iterrows():
-        item = {}
-        for column, value in row.items():
-            if isinstance(value, float):
-                item[column] = float_to_decimal(value)
-            elif pd.isna(value):
-                item[column] = None
-            else:
-                item[column] = value
+        item = {
+            'Trip': row['Trip'],
+            'Booking#': row['Booking #'],
+            'Customer': row['Customer'],
+            'TripStartZ': row['Trip start Z'],
+            'Aircraft': row['Aircraft'],
+            'Orig': row['Orig'],
+            'Dest': row['Dest'],
+            'Status': row['Status'],
+            'Price': float_to_decimal(row['Price'])
+        }
         items.append(item)
     return items
 
 # Main function
 def lambda_handler():
-    file_type = 'trip_finance' #trip_finance, logged_flights, quickbooks_desktop_export
+    file_type = 'quickbooks_desktop_export' #trip_finance, logged_flights, quickbooks_desktop_export
     start_date = '07/01/2024'
-    end_date = '07/26/2024'
+    end_date = '07/29/2024'
     login_url = "https://portal.jetinsight.com/users/sign_in"
     excel_url = generate_url(file_type, start_date, end_date)
 
@@ -101,6 +102,7 @@ def lambda_handler():
         browser = p.chromium.launch(headless=False)
         context = browser.new_context()
         page = context.new_page()
+        
         try:
             # Login
             page.goto(login_url, timeout=30000)
