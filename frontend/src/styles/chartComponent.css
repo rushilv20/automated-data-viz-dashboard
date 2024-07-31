@@ -1,0 +1,30 @@
+/* chartComponent.css */
+.chart-container {
+    width: 100%;
+    max-width: 800px;
+    /* Increase this value to make the chart wider */
+    margin: 0 auto;
+    /* Center align the chart */
+    height: 350px;
+    /* Adjust the height as needed */
+}
+
+.filters {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    justify-items: center;
+}
+
+@media (min-width: 768px) {
+    .charts-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}

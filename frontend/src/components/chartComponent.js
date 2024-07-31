@@ -1,87 +1,26 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
-import Chart from 'chart.js/auto';
 import Select from 'react-select';
-import './chartComponent.css'; // Import CSS file for styling
-
-// Helper function to parse date strings into Date objects
-const parseDate = dateString => {
-    const [month, day, year] = dateString.split('/');
-    return new Date(`20${year}`, month - 1, day);
-};
-
-// Consolidate flights by trip ID, summing flight hours and organizing by date
-const consolidateFlights = flights => {
-    const flightData = {};
-    flights.forEach(flight => {
-        const dateKey = parseDate(flight['Start Z']).toISOString().slice(0, 10); // Convert date to YYYY-MM-DD format
-        if (!flightData[flight.Trip]) {
-            flightData[flight.Trip] = {
-                Aircraft: flight.Aircraft,
-                TotalFlightHrs: 0,
-                Dates: {}
-            };
-        }
-        flightData[flight.Trip].TotalFlightHrs += parseFloat(flight['Flight hrs']);
-        if (!flightData[flight.Trip].Dates[dateKey]) {
-            flightData[flight.Trip].Dates[dateKey] = {
-                Trip: flight.Trip,
-                FlightHrs: parseFloat(flight['Flight hrs']),
-                Price: 0 // Initialize price, to be updated from invoices
-            };
-        } else {
-            flightData[flight.Trip].Dates[dateKey].FlightHrs += parseFloat(flight['Flight hrs']);
-        }
-    });
-    return flightData;
-};
-
-// Add invoice pricing information to the consolidated flights data
-const matchInvoices = (flights, invoices) => {
-    invoices.forEach(invoice => {
-        const flight = flights[invoice.Trip];
-        if (flight) {
-            // Calculate total flight hours for the trip
-            const totalFlightHrs = flight.TotalFlightHrs;
-            // Distribute price proportionally to each date
-            Object.keys(flight.Dates).forEach(date => {
-                const dateData = flight.Dates[date];
-                const proportion = dateData.FlightHrs / totalFlightHrs;
-                dateData.Price += proportion * parseFloat(invoice.Price);
-            });
-        }
-    });
-};
-
-// Organize flight data by aircraft, consolidating data by date under each aircraft
-const organizeDataByAircraft = flights => {
-    const aircraftData = {};
-    Object.values(flights).forEach(flight => {
-        const { Aircraft, Dates } = flight;
-        if (!aircraftData[Aircraft]) {
-            aircraftData[Aircraft] = {};
-        }
-        Object.entries(Dates).forEach(([date, data]) => {
-            if (data.FlightHrs > 0 && !isNaN(data.FlightHrs) && data.Price > 0 && !isNaN(data.Price)) {
-                if (!aircraftData[Aircraft][date]) {
-                    aircraftData[Aircraft][date] = data;
-                } else {
-                    aircraftData[Aircraft][date].FlightHrs += data.FlightHrs;
-                    aircraftData[Aircraft][date].Price += data.Price;
-                }
-            }
-        });
-    });
-    return aircraftData;
-};
+import RevenuePerHour from './RevenuePerHour';
+import MoMRevenueComparison from './MoMRevenueComparison';
+import YoYRevenueComparison from './YoYRevenueComparison';
+import { consolidateFlights, matchInvoices, organizeDataByAircraft } from '../utils/dataHelpers';
+import '../styles/chartComponent.css'; // Import CSS file for styling
 
 const ChartComponent = () => {
     const [aircraftData, setAircraftData] = useState({});
     const [error, setError] = useState(null);
-    const [selectedAircrafts, setSelectedAircrafts] = useState([]);
-    const [startDate, setStartDate] = useState('2023-01-01');
-    const [endDate, setEndDate] = useState('2024-12-31');
-    const chartRef = useRef(null);
+
+    // Pre-select these aircrafts
+    const preSelectedAircrafts = [
+        'N118DL', 'N17FA', 'N525F', 'N560MC', 'N808MC', 'N399LF', 'N804MC', 'N440WP'
+    ];
+
+    const [selectedAircrafts, setSelectedAircrafts] = useState(preSelectedAircrafts);
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonthYear = `${currentYear}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+    const [selectedMonthYear, setSelectedMonthYear] = useState({ value: currentMonthYear, label: new Date(currentYear, currentDate.getMonth()).toLocaleString('default', { month: 'long', year: 'numeric' }) });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -102,60 +41,6 @@ const ChartComponent = () => {
         fetchData();
     }, []);
 
-    useEffect(() => {
-        if (!chartRef.current) return;
-
-        const ctx = chartRef.current.getContext('2d');
-        const filteredData = {};
-
-        Object.keys(aircraftData).forEach(aircraft => {
-            if (selectedAircrafts.length === 0 || selectedAircrafts.includes(aircraft)) {
-                Object.keys(aircraftData[aircraft]).forEach(date => {
-                    const dateObj = new Date(date);
-                    if (dateObj >= new Date(startDate) && dateObj <= new Date(endDate)) {
-                        if (!filteredData[aircraft]) {
-                            filteredData[aircraft] = { totalPrice: 0, totalFlightHrs: 0 };
-                        }
-                        filteredData[aircraft].totalPrice += aircraftData[aircraft][date].Price;
-                        filteredData[aircraft].totalFlightHrs += aircraftData[aircraft][date].FlightHrs;
-                    }
-                });
-            }
-        });
-
-        const labels = Object.keys(filteredData);
-        const dataPoints = labels.map(aircraft => 
-            filteredData[aircraft].totalFlightHrs ? filteredData[aircraft].totalPrice / filteredData[aircraft].totalFlightHrs : 0
-        );
-
-        const chartData = {
-            labels,
-            datasets: [{
-                label: 'Revenue Per Hour',
-                data: dataPoints,
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
-            }]
-        };
-
-        if (chartRef.current.chartInstance) {
-            chartRef.current.chartInstance.destroy();  // Destroy previous chart instance if exists
-        }
-
-        chartRef.current.chartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: chartData,
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }, [aircraftData, selectedAircrafts, startDate, endDate]);
-
     if (error) {
         return <div>{error}</div>;
     }
@@ -165,17 +50,28 @@ const ChartComponent = () => {
         label: aircraft
     }));
 
+    const monthYearOptions = [];
+    for (let year = 2023; year <= currentYear; year++) {
+        for (let month = 1; month <= 12; month++) {
+            monthYearOptions.push({
+                value: `${year}-${String(month).padStart(2, '0')}`,
+                label: new Date(year, month - 1).toLocaleString('default', { month: 'long', year: 'numeric' })
+            });
+        }
+    }
+
     return (
         <div>
-            <h1>Aircraft Revenue Analysis</h1>
+            <h1>BellAir Dashboard</h1>
             <div className="filters">
                 <div className="filter">
-                    <label>Start Date:</label>
-                    <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
-                </div>
-                <div className="filter">
-                    <label>End Date:</label>
-                    <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                    <label>Month and Year:</label>
+                    <Select
+                        options={monthYearOptions}
+                        value={selectedMonthYear}
+                        onChange={setSelectedMonthYear}
+                        styles={{ container: base => ({ ...base, width: 300 }) }}
+                    />
                 </div>
                 <div className="filter">
                     <label>Aircraft:</label>
@@ -184,11 +80,18 @@ const ChartComponent = () => {
                         options={aircraftOptions}
                         value={aircraftOptions.filter(option => selectedAircrafts.includes(option.value))}
                         onChange={selected => setSelectedAircrafts(selected.map(option => option.value))}
-                        styles={{ container: base => ({ ...base, width: 300 }) }}
+                        styles={{
+                            container: base => ({ ...base, width: '600px' }) // Adjust width as needed
+                        }}
                     />
                 </div>
             </div>
-            <canvas ref={chartRef} width="400" height="400"></canvas>
+            <div className="charts-grid">
+                <RevenuePerHour aircraftData={aircraftData} selectedAircrafts={selectedAircrafts} selectedMonthYear={selectedMonthYear} />
+                <MoMRevenueComparison aircraftData={aircraftData} selectedAircrafts={selectedAircrafts} selectedMonthYear={selectedMonthYear} />
+                <YoYRevenueComparison aircraftData={aircraftData} selectedAircrafts={selectedAircrafts} selectedMonthYear={selectedMonthYear} />
+                {/* Add more chart components here */}
+            </div>
         </div>
     );
 };
