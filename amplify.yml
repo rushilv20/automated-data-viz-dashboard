@@ -8,7 +8,7 @@ frontend:
         - chmod +x node_modules/.bin/react-scripts
     build:
       commands:
-        - npm start
+        - npm run build
   artifacts:
     baseDirectory: frontend/build
     files:
