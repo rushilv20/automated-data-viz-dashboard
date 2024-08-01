@@ -1,8 +1,9 @@
+// frontend/src/utils/api.js
 import axios from 'axios';
 
 const getData = async () => {
     try {
-        const response = await axios.get('https://www.bellairdashboard.com/api/dashboard'); // Ensure the correct URL
+        const response = await axios.get('http://backend-env.eba-mhhmuukm.us-east-1.elasticbeanstalk.com/api/dashboard'); // Update to use Elastic Beanstalk domain
         return response;
     } catch (error) {
         console.error('Error fetching data:', error);
