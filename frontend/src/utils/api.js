@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://backend-env.eba-mhhmuukm.us-east-1.elasticbeanstalk.com/api';
+const API_URL = 'https://bellairdashboard.com';
 
 const getData = async () => {
     try {

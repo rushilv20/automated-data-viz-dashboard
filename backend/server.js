@@ -4,7 +4,7 @@ const app = express();
 const dataRoutes = require('./routes/dashboard');
 
 const corsOptions = {
-    origin: 'https://dashboard.d15p3i91pmeilq.amplifyapp.com/', // Update this with your Amplify app domain
+    origin: 'https://bellairdashboard.com', // Update this with your Amplify app domain
     optionsSuccessStatus: 200
 };
 
