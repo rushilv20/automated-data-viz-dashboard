@@ -1,18 +1,30 @@
 const express = require('express');
-const cors = require('cors'); // Import cors
+const cors = require('cors');
 const app = express();
-const dataRoutes = require('./routes/dashboard');
+const dashboardRoutes = require('./routes/dashboard');
+
+const allowedOrigins = [
+  'https://bellairdashboard.com',
+  'https://www.bellairdashboard.com'
+];
 
 const corsOptions = {
-    origin: 'https://bellairdashboard.com', // Update this with your Amplify app domain
+    origin: function (origin, callback) {
+        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
 app.use(express.json());
-app.use('/api', dataRoutes);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+// Mounting the dashboard routes at the base path /api
+app.use('/api', dashboardRoutes);
+
+app.listen(3000, () => {
+    console.log('Server running on port 3000');
 });
