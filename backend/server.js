@@ -10,6 +10,7 @@ const allowedOrigins = [
 
 const corsOptions = {
     origin: function (origin, callback) {
+        console.log("Origin:", origin); // Debug log to check the origin
         if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
             callback(null, true);
         } else {
@@ -21,6 +22,9 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+
+// Handle preflight requests for all routes
+app.options('*', cors(corsOptions));
 
 // Mounting the dashboard routes at the base path /api
 app.use('/api', dashboardRoutes);

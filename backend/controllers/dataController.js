@@ -28,8 +28,6 @@ const parseDynamoDBData = (data) => {
     });
 };
 
-
-
 const getData = async (req, res) => {
     const tableNames = [config.TRIP_FINANCES, config.LOGGED_FLIGHTS, config.INVOICES];
     
@@ -50,6 +48,11 @@ const getData = async (req, res) => {
             invoices: parseDynamoDBData(results[2].Items)
         };
 
+        // Set CORS headers explicitly
+        res.setHeader('Access-Control-Allow-Origin', 'https://www.bellairdashboard.com');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
         responseHandler.success(res, data);
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -60,4 +63,3 @@ const getData = async (req, res) => {
 module.exports = {
     getData,
 };
-
