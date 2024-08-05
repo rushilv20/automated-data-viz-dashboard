@@ -14,7 +14,8 @@ const dashboardRoutes = require('./routes/dashboard');
 
 const allowedOrigins = [
   'https://bellairdashboard.com',
-  'https://www.bellairdashboard.com'
+  'https://www.bellairdashboard.com', 
+  'https://dashboard.d29pli9lfdj2gu.amplifyapp.com'
 ];
 
 const corsOptions = {
