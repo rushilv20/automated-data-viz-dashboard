@@ -21,7 +21,7 @@
       "function": {
         "backendFunction": {
           "deploymentBucketName": "amplify-bellair-dev-83e88-deployment",
-          "s3Key": "amplify-builds/backendFunction-345730736d6e666b2f47-build.zip"
+          "s3Key": "amplify-builds/backendFunction-512b6b4c623970612b6c-build.zip"
         }
       },
       "api": {
