@@ -1,7 +1,7 @@
-const dynamoClient = require('../../../../../../backend/clients/dynamoClient');
+const dynamoClient = require('../clients/dynamoClient');
 const { ScanCommand } = require("@aws-sdk/client-dynamodb"); // Import ScanCommand
 const config = require('../constants/config');
-const responseHandler = require('../../../../../../backend/utils/responseHandler');
+const responseHandler = require('../utils/responseHandler');
 
 const parseDynamoDBData = (data) => {
   return data.map(item => {
