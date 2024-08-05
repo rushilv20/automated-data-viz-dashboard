@@ -13,7 +13,7 @@ const app = express();
 const dashboardRoutes = require('./routes/dashboard');
 
 const allowedOrigins = [
-  'https://dashboard.d29pli9lfdj2gu.amplifyapp.com'
+  'https://www.bellairdashboard.com'
 ];
 
 const corsOptions = {

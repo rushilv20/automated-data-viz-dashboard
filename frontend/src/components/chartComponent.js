@@ -87,9 +87,18 @@ const ChartComponent = () => {
                 </div>
             </div>
             <div className="charts-grid">
-                <RevenuePerHour aircraftData={aircraftData} selectedAircrafts={selectedAircrafts} selectedMonthYear={selectedMonthYear} />
-                <MoMRevenueComparison aircraftData={aircraftData} selectedAircrafts={selectedAircrafts} selectedMonthYear={selectedMonthYear} />
-                <YoYRevenueComparison aircraftData={aircraftData} selectedAircrafts={selectedAircrafts} selectedMonthYear={selectedMonthYear} />
+                <div className="chart-container">
+                    <h2>Actual Price/Hour Vs. Breakeven Price/Hour</h2>
+                    <RevenuePerHour aircraftData={aircraftData} selectedAircrafts={selectedAircrafts} selectedMonthYear={selectedMonthYear} />
+                </div>
+                <div className="chart-container">
+                    <h2>M.O.M. Revenue/Hour Comparison</h2>
+                    <MoMRevenueComparison aircraftData={aircraftData} selectedAircrafts={selectedAircrafts} selectedMonthYear={selectedMonthYear} />
+                </div>
+                <div className="chart-container">
+                    <h2>Y.O.Y. Revenue/Hour Comparison</h2>
+                    <YoYRevenueComparison aircraftData={aircraftData} selectedAircrafts={selectedAircrafts} selectedMonthYear={selectedMonthYear} />
+                </div>
                 {/* Add more chart components here */}
             </div>
         </div>

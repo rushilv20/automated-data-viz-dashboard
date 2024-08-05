@@ -1,7 +1,7 @@
 /* chartComponent.css */
 .chart-container {
     width: 100%;
-    max-width: 800px;
+    max-width: 750px;
     /* Increase this value to make the chart wider */
     margin: 0 auto;
     /* Center align the chart */
