@@ -1,12 +1,14 @@
 /* chartComponent.css */
+
 .chart-container {
     width: 100%;
     max-width: 750px;
-    /* Increase this value to make the chart wider */
     margin: 0 auto;
     /* Center align the chart */
     height: 350px;
     /* Adjust the height as needed */
+    margin-bottom: 40px;
+    /* Add margin-bottom to create space between charts */
 }
 
 .filters {
@@ -19,12 +21,22 @@
 .charts-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 40px;
+    /* Increase gap between grid items for more space */
     justify-items: center;
 }
 
 @media (min-width: 768px) {
     .charts-grid {
         grid-template-columns: 1fr 1fr;
+        gap: 20px 40px;
+        /* Different gaps for rows and columns */
     }
+}
+
+.chart-container h2 {
+    margin-bottom: 10px;
+    font-size: 1.5em;
+    color: #333;
+    /* Adjust color as needed */
 }
