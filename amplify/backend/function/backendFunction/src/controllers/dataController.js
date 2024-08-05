@@ -49,7 +49,7 @@ const getData = async (req, res) => {
     };
 
     // Set CORS headers explicitly
-    res.setHeader('Access-Control-Allow-Origin', 'https://www.bellairdashboard.com');
+    res.setHeader('Access-Control-Allow-Origin', 'https://dashboard.d29pli9lfdj2gu.amplifyapp.com');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
