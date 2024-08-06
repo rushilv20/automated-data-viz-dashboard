@@ -129,7 +129,7 @@ def upload_to_dynamodb(items):
 def lambda_handler():
     file_type = 'logged_flights'
     start_date = '07/01/2024'
-    end_date = '08/05/2024'
+    end_date = '08/06/2024'
     login_url = "https://portal.jetinsight.com/users/sign_in"
     excel_url = generate_url(file_type, start_date, end_date)
 

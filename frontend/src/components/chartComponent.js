@@ -26,7 +26,7 @@ const ChartComponent = () => {
         const fetchData = async () => {
             try {
                 const result = await api.getData();
-                const flights = consolidateFlights(result.data.loggedFlights);
+                const flights = consolidateFlights(result.data.loggedFlights, result.data.invoices);
                 matchInvoices(flights, result.data.invoices);
                 const organizedData = organizeDataByAircraft(flights);
                 setAircraftData(organizedData);

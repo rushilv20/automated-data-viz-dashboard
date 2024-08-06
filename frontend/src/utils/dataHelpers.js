@@ -1,12 +1,15 @@
-// src/utils/dataHelpers.js
 export const parseDate = dateString => {
     const [month, day, year] = dateString.split('/');
     return new Date(`20${year}`, month - 1, day);
 };
 
-export const consolidateFlights = flights => {
+export const consolidateFlights = (flights, invoices) => {
     const flightData = {};
+    const invoicedTrips = new Set(invoices.map(invoice => invoice.Trip).filter(trip => invoices.find(invoice => invoice.Trip === trip && invoice.Status === 'Invoiced')));
+
     flights.forEach(flight => {
+        if (!invoicedTrips.has(flight.Trip)) return;
+
         const dateKey = parseDate(flight['Start Z']).toISOString().slice(0, 10); // Convert date to YYYY-MM-DD format
         if (!flightData[flight.Trip]) {
             flightData[flight.Trip] = {
@@ -26,21 +29,24 @@ export const consolidateFlights = flights => {
             flightData[flight.Trip].Dates[dateKey].FlightHrs += parseFloat(flight['Flight hrs']);
         }
     });
+
     return flightData;
 };
 
 export const matchInvoices = (flights, invoices) => {
     invoices.forEach(invoice => {
-        const flight = flights[invoice.Trip];
-        if (flight) {
-            // Calculate total flight hours for the trip
-            const totalFlightHrs = flight.TotalFlightHrs;
-            // Distribute price proportionally to each date
-            Object.keys(flight.Dates).forEach(date => {
-                const dateData = flight.Dates[date];
-                const proportion = dateData.FlightHrs / totalFlightHrs;
-                dateData.Price += proportion * parseFloat(invoice.Price);
-            });
+        if (invoice.Status === 'Invoiced') {
+            const flight = flights[invoice.Trip];
+            if (flight) {
+                // Calculate total flight hours for the trip
+                const totalFlightHrs = flight.TotalFlightHrs;
+                // Distribute price proportionally to each date
+                Object.keys(flight.Dates).forEach(date => {
+                    const dateData = flight.Dates[date];
+                    const proportion = dateData.FlightHrs / totalFlightHrs;
+                    dateData.Price += proportion * parseFloat(invoice.Price);
+                });
+            }
         }
     });
 };
