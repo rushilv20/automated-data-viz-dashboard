@@ -7,23 +7,18 @@ html {
     height: 100%;
     width: 100%;
     overflow: hidden;
-    /* Remove the horizontal scrollbar */
+    /* To avoid unwanted scrollbars */
 }
 
 .page-container {
     padding: 20px;
-    /* Adjust the padding as needed */
     min-height: 100vh;
-    /* Ensure full viewport height */
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    /* Start content from the top */
     align-items: center;
     overflow-y: auto;
-    /* Enable vertical scrolling */
     overflow-x: hidden;
-    /* Disable horizontal scrolling */
 }
 
 h1 {
@@ -31,17 +26,15 @@ h1 {
     margin-bottom: 20px;
     font-size: 2.5rem;
     width: 100%;
-    /* Ensure it spans full width */
 }
 
 .filters {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     flex-wrap: wrap;
-    /* Allows filters to wrap on smaller screens */
     margin-bottom: 20px;
     width: 100%;
-    max-width: 1200px;
+    max-width: 1440px;
 }
 
 .filter {
@@ -59,11 +52,10 @@ h1 {
 .charts-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    /* Three charts per row */
+    /* 3 columns layout */
     gap: 20px;
     width: 100%;
     max-width: 1440px;
-    /* Increased to fit three charts */
 }
 
 .chart-container {
@@ -71,21 +63,23 @@ h1 {
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    height: 100%;
-    /* Make sure the height of all containers is uniform */
+    height: 400px;
+    /* Set a fixed height to keep all charts uniform */
+    width: 100%;
+    /* Ensure charts take up full column width */
 }
 
 @media (max-width: 1200px) {
     .charts-grid {
         grid-template-columns: repeat(2, 1fr);
-        /* Two charts per row on smaller screens */
+        /* 2 columns layout for smaller screens */
     }
 }
 
 @media (max-width: 768px) {
     .charts-grid {
         grid-template-columns: 1fr;
-        /* Single column layout on small screens */
+        /* 1 column layout for very small screens */
     }
 
     h1 {
