@@ -61,7 +61,7 @@ const ChartComponent = () => {
     }
 
     return (
-        <div>
+        <div className="page-container">
             <h1>BellAir Dashboard</h1>
             <div className="filters">
                 <div className="filter">
