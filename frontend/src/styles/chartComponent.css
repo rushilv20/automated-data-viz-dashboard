@@ -9,7 +9,6 @@ html {
     overflow-x: hidden;
 }
 
-/* Make the page scrollable */
 .page-container {
     padding: 20px;
     /* Adjust the padding as needed */
@@ -68,11 +67,11 @@ h1 {
 
 .chart-container {
     background-color: #f9f9f9;
-    padding: 20px;
+    padding: 15px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    height: 400px;
-    /* Set a fixed height to keep all charts uniform */
+    height: 350px;
+    /* Adjusted height to prevent overlapping */
     width: 100%;
     /* Ensure charts take up full column width */
 }
