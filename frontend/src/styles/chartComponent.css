@@ -9,8 +9,9 @@ html {
     overflow-x: hidden;
 }
 
+/* Make the page scrollable */
 .page-container {
-    padding: 20px;
+    padding: 20px 15px;
     /* Adjust the padding as needed */
     min-height: 100vh;
     /* Ensure full viewport height */
@@ -21,8 +22,6 @@ html {
     align-items: center;
     overflow-y: auto;
     /* Enable vertical scrolling */
-    width: 100%;
-    /* Full screen width */
 }
 
 h1 {
@@ -40,7 +39,7 @@ h1 {
     /* Allows filters to wrap on smaller screens */
     margin-bottom: 20px;
     width: 100%;
-    max-width: 1440px;
+    max-width: 1200px;
 }
 
 .filter {
@@ -57,36 +56,23 @@ h1 {
 
 .charts-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    /* 3 columns layout */
+    grid-template-columns: 1fr 1fr;
     gap: 20px;
     width: 100%;
-    max-width: 1440px;
-    /* Ensure it uses the full width available */
+    max-width: 1200px;
 }
 
 .chart-container {
     background-color: #f9f9f9;
-    padding: 15px;
+    padding: 20px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    height: 350px;
-    /* Adjusted height to prevent overlapping */
-    width: 100%;
-    /* Ensure charts take up full column width */
-}
-
-@media (max-width: 1200px) {
-    .charts-grid {
-        grid-template-columns: repeat(2, 1fr);
-        /* 2 columns layout for smaller screens */
-    }
 }
 
 @media (max-width: 768px) {
     .charts-grid {
         grid-template-columns: 1fr;
-        /* 1 column layout for very small screens */
+        /* Single column layout on small screens */
     }
 
     h1 {
