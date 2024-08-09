@@ -6,19 +6,24 @@ html {
     box-sizing: border-box;
     height: 100%;
     width: 100%;
-    overflow: hidden;
-    /* To avoid unwanted scrollbars */
+    overflow-x: hidden;
 }
 
+/* Make the page scrollable */
 .page-container {
     padding: 20px;
+    /* Adjust the padding as needed */
     min-height: 100vh;
+    /* Ensure full viewport height */
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
+    /* Start content from the top */
     align-items: center;
     overflow-y: auto;
-    overflow-x: hidden;
+    /* Enable vertical scrolling */
+    width: 100%;
+    /* Full screen width */
 }
 
 h1 {
@@ -26,12 +31,14 @@ h1 {
     margin-bottom: 20px;
     font-size: 2.5rem;
     width: 100%;
+    /* Ensure it spans full width */
 }
 
 .filters {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
     flex-wrap: wrap;
+    /* Allows filters to wrap on smaller screens */
     margin-bottom: 20px;
     width: 100%;
     max-width: 1440px;
@@ -56,6 +63,7 @@ h1 {
     gap: 20px;
     width: 100%;
     max-width: 1440px;
+    /* Ensure it uses the full width available */
 }
 
 .chart-container {
