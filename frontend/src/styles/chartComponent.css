@@ -9,7 +9,7 @@ html {
     overflow-x: hidden;
 }
 
-/* Add some padding to the top and bottom of the page */
+/* Make the page scrollable */
 .page-container {
     padding: 20px 15px;
     /* Adjust the padding as needed */
@@ -17,14 +17,19 @@ html {
     /* Ensure full viewport height */
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
+    /* Start content from the top */
     align-items: center;
+    overflow-y: auto;
+    /* Enable vertical scrolling */
 }
 
 h1 {
     text-align: center;
     margin-bottom: 20px;
     font-size: 2.5rem;
+    width: 100%;
+    /* Ensure it spans full width */
 }
 
 .filters {
