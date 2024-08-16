@@ -1,5 +1,3 @@
-// src/components/ChartComponent.js
-
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import Select from 'react-select';
@@ -29,9 +27,9 @@ const ChartComponent = () => {
         const fetchData = async () => {
             try {
                 const result = await api.getData();
-                const flights = consolidateFlights(result.data.loggedFlights);
-                matchInvoices(flights, result.data.invoices);
-                const organizedData = organizeDataByAircraft(flights);
+                const flights = consolidateFlights(result.data.loggedFlights || []);
+                matchInvoices(flights, result.data.invoices || []);
+                const organizedData = organizeDataByAircraft(flights || {});
                 setAircraftData(organizedData);
 
                 console.log("Aircraft Data Organized by Date:", organizedData);
@@ -106,7 +104,6 @@ const ChartComponent = () => {
                     <h2>Breakeven Hours @ Current Pricing</h2>
                     <BreakevenHours aircraftData={aircraftData} selectedAircrafts={selectedAircrafts} selectedMonthYear={selectedMonthYear} />
                 </div>
-                {/* Add more chart components here */}
             </div>
         </div>
     );

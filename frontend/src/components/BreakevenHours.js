@@ -1,5 +1,3 @@
-// src/components/BreakevenHours.js
-
 import React, { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
 import { fixedCosts, variableCosts } from './constants';
@@ -67,7 +65,7 @@ const BreakevenHours = ({ aircraftData, selectedAircrafts, selectedMonthYear }) 
         };
 
         if (chartRef.current.chartInstance) {
-            chartRef.current.chartInstance.destroy();
+            chartRef.current.chartInstance.destroy();  // Destroy previous chart instance if exists
         }
 
         chartRef.current.chartInstance = new Chart(ctx, {
@@ -85,7 +83,11 @@ const BreakevenHours = ({ aircraftData, selectedAircrafts, selectedMonthYear }) 
         });
     }, [aircraftData, selectedAircrafts, selectedMonthYear]);
 
-    return <canvas ref={chartRef} width="1000" height="600"></canvas>;
+    return (
+        <div className="chart-container">
+            <canvas ref={chartRef} width="400" height="400"></canvas> {/* Adjust width and height here */}
+        </div>
+    );
 };
 
 export default BreakevenHours;
