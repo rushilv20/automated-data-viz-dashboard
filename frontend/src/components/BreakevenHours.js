@@ -1,68 +1,63 @@
+// src/components/BreakevenHours.js
+
 import React, { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
+import { fixedCosts, variableCosts } from './constants';
 
-const BreakevenHoursChart = ({ aircraftData, selectedAircrafts, selectedMonthYear, fixedCosts, variableCosts }) => {
+const BreakevenHours = ({ aircraftData, selectedAircrafts, selectedMonthYear }) => {
     const chartRef = useRef(null);
 
     useEffect(() => {
-        if (!chartRef.current || !selectedMonthYear) return;
+        if (!chartRef.current || !selectedMonthYear || !aircraftData || !selectedAircrafts) return;
 
         const ctx = chartRef.current.getContext('2d');
         const filteredData = {};
-        const breakevenData = {};
 
         const [selectedYear, selectedMonth] = selectedMonthYear.value.split('-');
-        const startDate = new Date(selectedYear, selectedMonth - 1, 1);
-        const endDate = new Date(selectedYear, selectedMonth, 0);
+        const monthLabel = new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
 
-        // Filter aircraft data
-        Object.keys(aircraftData).forEach(aircraft => {
-            if (selectedAircrafts.length === 0 || selectedAircrafts.includes(aircraft)) {
-                Object.keys(aircraftData[aircraft]).forEach(date => {
+        selectedAircrafts.forEach(aircraft => {
+            if (aircraftData[aircraft]) {
+                const flightHours = Object.keys(aircraftData[aircraft]).reduce((totalHours, date) => {
                     const dateObj = new Date(date);
-                    if (dateObj >= startDate && dateObj <= endDate) {
-                        if (!filteredData[aircraft]) {
-                            filteredData[aircraft] = { totalFlightHrs: 0, totalRevenue: 0 };
-                        }
-                        filteredData[aircraft].totalFlightHrs += aircraftData[aircraft][date].FlightHrs;
-                        filteredData[aircraft].totalRevenue += aircraftData[aircraft][date].Price;
+                    if (dateObj >= new Date(selectedYear, selectedMonth - 1, 1) && dateObj <= new Date(selectedYear, selectedMonth, 0)) {
+                        return totalHours + (aircraftData[aircraft][date].FlightHrs || 0);
                     }
-                });
+                    return totalHours;
+                }, 0);
 
-                // Calculate Revenue/hr
-                const revenuePerHour = filteredData[aircraft].totalRevenue / filteredData[aircraft].totalFlightHrs;
+                const revenuePerHour = flightHours > 0 ? aircraftData[aircraft].totalPrice / flightHours : 0;
+                const contributionMargin = revenuePerHour - (variableCosts[monthLabel][aircraft] || 0);
+                const breakevenHours = contributionMargin > 0 ? (fixedCosts[monthLabel][aircraft] || 0) / contributionMargin : null;
 
-                // Calculate Contribution Margin
-                const contributionMargin = revenuePerHour - variableCosts[aircraft];
-
-                // Calculate Breakeven Hours
-                breakevenData[aircraft] = fixedCosts[aircraft] / contributionMargin;
+                filteredData[aircraft] = {
+                    flightHours,
+                    breakevenHours
+                };
             }
         });
 
         const labels = Object.keys(filteredData);
-        const dataPoints = labels.map(aircraft => filteredData[aircraft].totalFlightHrs);
-        const breakevenPoints = labels.map(aircraft => breakevenData[aircraft]);
+        const flightHoursData = labels.map(aircraft => filteredData[aircraft].flightHours);
+        const breakevenData = labels.map(aircraft => filteredData[aircraft].breakevenHours);
 
         const chartData = {
             labels,
             datasets: [
                 {
-                    label: 'Actual Flight Hours',
-                    data: dataPoints,
-                    backgroundColor: '#FF0000', // Red color for bars
-                    borderColor: '#FF0000',
+                    label: 'Total Flight Hours',
+                    data: flightHoursData,
+                    backgroundColor: 'rgba(75, 192, 192, 0.3)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
                     borderWidth: 1,
-                    order: 1, // Draw this dataset first
                     type: 'bar'
                 },
                 {
-                    label: 'Breakeven Hours @ Current Pricing',
-                    data: breakevenPoints,
-                    backgroundColor: '#C0C0C0',
-                    borderColor: '#C0C0C0',
+                    label: 'Breakeven Hours',
+                    data: breakevenData,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
                     borderWidth: 2,
-                    order: 2, // Draw this dataset after the bars
                     type: 'line',
                     pointStyle: 'circle',
                     pointRadius: 5,
@@ -72,11 +67,11 @@ const BreakevenHoursChart = ({ aircraftData, selectedAircrafts, selectedMonthYea
         };
 
         if (chartRef.current.chartInstance) {
-            chartRef.current.chartInstance.destroy();  // Destroy previous chart instance if exists
+            chartRef.current.chartInstance.destroy();
         }
 
         chartRef.current.chartInstance = new Chart(ctx, {
-            type: 'bar', // Initial chart type
+            type: 'bar',
             data: chartData,
             options: {
                 responsive: true,
@@ -85,28 +80,12 @@ const BreakevenHoursChart = ({ aircraftData, selectedAircrafts, selectedMonthYea
                     y: {
                         beginAtZero: true
                     }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed.y !== null) {
-                                    label += context.parsed.y.toFixed(2);
-                                }
-                                return label;
-                            }
-                        }
-                    }
                 }
             }
         });
     }, [aircraftData, selectedAircrafts, selectedMonthYear]);
 
-    return <div className="chart-container"><canvas ref={chartRef} width="1000" height="600"></canvas></div>; // Adjust width and height here
+    return <canvas ref={chartRef} width="1000" height="600"></canvas>;
 };
 
-export default BreakevenHoursChart;
+export default BreakevenHours;

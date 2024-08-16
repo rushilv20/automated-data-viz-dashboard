@@ -1,10 +1,12 @@
+// src/components/ChartComponent.js
+
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import Select from 'react-select';
 import RevenuePerHour from './RevenuePerHour';
 import MoMRevenueComparison from './MoMRevenueComparison';
 import YoYRevenueComparison from './YoYRevenueComparison';
-import BreakevenHours from './BreakevenHours'; // Import the new component
+import BreakevenHours from './BreakevenHours';
 import { consolidateFlights, matchInvoices, organizeDataByAircraft } from '../utils/dataHelpers';
 import '../styles/chartComponent.css'; // Import CSS file for styling
 
@@ -22,19 +24,6 @@ const ChartComponent = () => {
     const currentYear = currentDate.getFullYear();
     const currentMonthYear = `${currentYear}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
     const [selectedMonthYear, setSelectedMonthYear] = useState({ value: currentMonthYear, label: new Date(currentYear, currentDate.getMonth()).toLocaleString('default', { month: 'long', year: 'numeric' }) });
-
-    // Example fixed costs and variable costs (you can replace these with actual data or props)
-    const fixedCosts = {
-        'N118DL': 5000,
-        'N17FA': 6000,
-        // Add other aircraft costs here...
-    };
-
-    const variableCosts = {
-        'N118DL': 200,
-        'N17FA': 250,
-        // Add other aircraft costs here...
-    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -115,9 +104,9 @@ const ChartComponent = () => {
                 </div>
                 <div className="chart-container">
                     <h2>Breakeven Hours @ Current Pricing</h2>
-                    <BreakevenHours aircraftData={aircraftData} selectedAircrafts={selectedAircrafts} selectedMonthYear={selectedMonthYear} fixedCosts={fixedCosts} variableCosts={variableCosts} />
+                    <BreakevenHours aircraftData={aircraftData} selectedAircrafts={selectedAircrafts} selectedMonthYear={selectedMonthYear} />
                 </div>
-                {/* Add more chart components here if needed */}
+                {/* Add more chart components here */}
             </div>
         </div>
     );

@@ -1,16 +1,8 @@
+// src/components/RevenuePerHour.js
+
 import React, { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
-
-const breakevenPrices = {
-    N118DL: 4033,
-    N17FA: 3802,
-    N525F: 3970,
-    N560MC: 5463,
-    N808MC: 4943,
-    N399LF: 5500,
-    N804MC: 5398,
-    N440WP: 5200
-};
+import { breakevenPrices } from './constants';
 
 const RevenuePerHour = ({ aircraftData, selectedAircrafts, selectedMonthYear }) => {
     const chartRef = useRef(null);
@@ -25,8 +17,10 @@ const RevenuePerHour = ({ aircraftData, selectedAircrafts, selectedMonthYear }) 
         const startDate = new Date(selectedYear, selectedMonth - 1, 1);
         const endDate = new Date(selectedYear, selectedMonth, 0); // Last day of the selected month
 
-        Object.keys(aircraftData).forEach(aircraft => {
-            if (selectedAircrafts.length === 0 || selectedAircrafts.includes(aircraft)) {
+        const monthLabel = new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+
+        selectedAircrafts.forEach(aircraft => {
+            if (aircraftData[aircraft]) {
                 Object.keys(aircraftData[aircraft]).forEach(date => {
                     const dateObj = new Date(date);
                     if (dateObj >= startDate && dateObj <= endDate) {
@@ -45,7 +39,7 @@ const RevenuePerHour = ({ aircraftData, selectedAircrafts, selectedMonthYear }) 
             filteredData[aircraft].totalFlightHrs ? filteredData[aircraft].totalPrice / filteredData[aircraft].totalFlightHrs : 0
         );
 
-        const breakevenDataPoints = labels.map(aircraft => breakevenPrices[aircraft]);
+        const breakevenDataPoints = labels.map(aircraft => breakevenPrices[monthLabel][aircraft]);
 
         const chartData = {
             labels,
@@ -87,22 +81,6 @@ const RevenuePerHour = ({ aircraftData, selectedAircrafts, selectedMonthYear }) 
                 scales: {
                     y: {
                         beginAtZero: true
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed.y !== null) {
-                                    label += context.parsed.y.toFixed(2);
-                                }
-                                return label;
-                            }
-                        }
                     }
                 }
             }
