@@ -4,6 +4,7 @@ import Select from 'react-select';
 import RevenuePerHour from './RevenuePerHour';
 import MoMRevenueComparison from './MoMRevenueComparison';
 import YoYRevenueComparison from './YoYRevenueComparison';
+import BreakevenHours from './BreakevenHours'; // Import the new component
 import { consolidateFlights, matchInvoices, organizeDataByAircraft } from '../utils/dataHelpers';
 import '../styles/chartComponent.css'; // Import CSS file for styling
 
@@ -22,11 +23,24 @@ const ChartComponent = () => {
     const currentMonthYear = `${currentYear}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
     const [selectedMonthYear, setSelectedMonthYear] = useState({ value: currentMonthYear, label: new Date(currentYear, currentDate.getMonth()).toLocaleString('default', { month: 'long', year: 'numeric' }) });
 
+    // Example fixed costs and variable costs (you can replace these with actual data or props)
+    const fixedCosts = {
+        'N118DL': 5000,
+        'N17FA': 6000,
+        // Add other aircraft costs here...
+    };
+
+    const variableCosts = {
+        'N118DL': 200,
+        'N17FA': 250,
+        // Add other aircraft costs here...
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const result = await api.getData();
-                const flights = consolidateFlights(result.data.loggedFlights, result.data.invoices);
+                const flights = consolidateFlights(result.data.loggedFlights);
                 matchInvoices(flights, result.data.invoices);
                 const organizedData = organizeDataByAircraft(flights);
                 setAircraftData(organizedData);
@@ -61,7 +75,7 @@ const ChartComponent = () => {
     }
 
     return (
-        <div className="page-container">
+        <div>
             <h1>BellAir Dashboard</h1>
             <div className="filters">
                 <div className="filter">
@@ -99,7 +113,11 @@ const ChartComponent = () => {
                     <h2>Y.O.Y. Revenue/Hour Comparison</h2>
                     <YoYRevenueComparison aircraftData={aircraftData} selectedAircrafts={selectedAircrafts} selectedMonthYear={selectedMonthYear} />
                 </div>
-                {/* Add more chart components here */}
+                <div className="chart-container">
+                    <h2>Breakeven Hours @ Current Pricing</h2>
+                    <BreakevenHours aircraftData={aircraftData} selectedAircrafts={selectedAircrafts} selectedMonthYear={selectedMonthYear} fixedCosts={fixedCosts} variableCosts={variableCosts} />
+                </div>
+                {/* Add more chart components here if needed */}
             </div>
         </div>
     );
