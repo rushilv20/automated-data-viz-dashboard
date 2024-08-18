@@ -1,7 +1,7 @@
 import os
 import boto3
 from playwright.sync_api import sync_playwright, TimeoutError
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 from decimal import Decimal, InvalidOperation
 import glob
@@ -92,8 +92,8 @@ def prepare_items_for_dynamodb(df):
 # Main function
 def lambda_handler():
     file_type = 'trip_finance' #trip_finance, logged_flights, quickbooks_desktop_export
-    start_date = '07/01/2024'
-    end_date = '08/12/2024'
+    start_date = (datetime.today() - timedelta(days=7)).strftime('%m/%d/%Y')
+    end_date = datetime.today().strftime('%m/%d/%Y')
     login_url = "https://portal.jetinsight.com/users/sign_in"
     excel_url = generate_url(file_type, start_date, end_date)
 
