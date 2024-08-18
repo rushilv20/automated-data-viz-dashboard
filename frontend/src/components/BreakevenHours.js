@@ -19,14 +19,14 @@ const BreakevenHours = ({ aircraftData, selectedAircrafts, selectedMonthYear }) 
                 const flightHours = Object.keys(aircraftData[aircraft]).reduce((totalHours, date) => {
                     const dateObj = new Date(date);
                     if (dateObj >= new Date(selectedYear, selectedMonth - 1, 1) && dateObj <= new Date(selectedYear, selectedMonth, 0)) {
-                        return totalHours + (aircraftData[aircraft][date]?.FlightHrs || 0);
+                        return totalHours + (aircraftData[aircraft][date].FlightHrs || 0);
                     }
                     return totalHours;
                 }, 0);
 
                 const revenuePerHour = flightHours > 0 ? aircraftData[aircraft].totalPrice / flightHours : 0;
-                const contributionMargin = revenuePerHour - (variableCosts[monthLabel]?.[aircraft] || 0);
-                const breakevenHours = contributionMargin > 0 ? (fixedCosts[monthLabel]?.[aircraft] || 0) / contributionMargin : null;
+                const contributionMargin = revenuePerHour - (variableCosts[monthLabel][aircraft] || 0);
+                const breakevenHours = contributionMargin > 0 ? (fixedCosts[monthLabel][aircraft] || 0) / contributionMargin : null;
 
                 filteredData[aircraft] = {
                     flightHours,
@@ -39,14 +39,18 @@ const BreakevenHours = ({ aircraftData, selectedAircrafts, selectedMonthYear }) 
         const flightHoursData = labels.map(aircraft => filteredData[aircraft].flightHours);
         const breakevenData = labels.map(aircraft => filteredData[aircraft].breakevenHours);
 
+        const backgroundColors = flightHoursData.map((hours, index) =>
+            hours >= breakevenData[index] ? 'rgba(0, 255, 0, 0.6)' : 'rgba(255, 0, 0, 0.6)' // Green if flight hours >= breakeven hours, otherwise red
+        );
+
         const chartData = {
             labels,
             datasets: [
                 {
                     label: 'Total Flight Hours',
                     data: flightHoursData,
-                    backgroundColor: 'rgba(75, 192, 192, 0.3)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: backgroundColors,
+                    borderColor: 'rgba(0, 0, 0, 0.1)',
                     borderWidth: 1,
                     type: 'bar'
                 },
@@ -59,7 +63,9 @@ const BreakevenHours = ({ aircraftData, selectedAircrafts, selectedMonthYear }) 
                     type: 'line',
                     pointStyle: 'circle',
                     pointRadius: 5,
-                    pointHoverRadius: 7
+                    pointHoverRadius: 7,
+                    fill: false,
+                    tension: 0.4 // Add some tension to make the line slightly curved
                 }
             ]
         };
@@ -78,12 +84,32 @@ const BreakevenHours = ({ aircraftData, selectedAircrafts, selectedMonthYear }) 
                     y: {
                         beginAtZero: true
                     }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y.toFixed(2);
+                                }
+                                return label;
+                            }
+                        }
+                    }
                 }
             }
         });
     }, [aircraftData, selectedAircrafts, selectedMonthYear]);
 
-    return <div className="chart-container"><canvas ref={chartRef} width="1000" height="600"></canvas></div>; // Adjust width and height here
+    return (
+        <div className="chart-container">
+            <canvas ref={chartRef} width="1000" height="600"></canvas>
+        </div>
+    );
 };
 
 export default BreakevenHours;
