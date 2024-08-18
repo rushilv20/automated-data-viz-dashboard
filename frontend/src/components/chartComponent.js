@@ -26,21 +26,36 @@ const ChartComponent = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                console.log('Starting data fetch...');
                 const result = await api.getData();
+                console.log('Data fetched successfully:', result);
+    
+                if (!result.data) {
+                    throw new Error('No data received from API');
+                }
+    
+                console.log('Parsing logged flights...');
                 const flights = consolidateFlights(result.data.loggedFlights || []);
+                console.log('Flights consolidated:', flights);
+    
+                console.log('Matching invoices...');
                 matchInvoices(flights, result.data.invoices || []);
+                console.log('Invoices matched with flights:', flights);
+    
+                console.log('Organizing data by aircraft...');
                 const organizedData = organizeDataByAircraft(flights || {});
+                console.log('Data organized by aircraft:', organizedData);
+    
                 setAircraftData(organizedData);
-
-                console.log("Aircraft Data Organized by Date:", organizedData);
             } catch (error) {
-                console.error('Error fetching data:', error);
+                console.error('Error fetching or processing data:', error);
                 setError('Error fetching data.');
             }
         };
-
+    
         fetchData();
     }, []);
+    
 
     if (error) {
         return <div>{error}</div>;
