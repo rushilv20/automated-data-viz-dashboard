@@ -30,20 +30,20 @@ const ChartComponent = () => {
                 const result = await api.getData();
                 console.log('Data fetched successfully:', result);
     
-                if (!result.data) {
-                    throw new Error('No data received from API');
+                if (!result.data || !result.data.loggedFlights || !result.data.invoices) {
+                    throw new Error('No or incomplete data received from API');
                 }
     
                 console.log('Parsing logged flights...');
-                const flights = consolidateFlights(result.data.loggedFlights || []);
+                const flights = consolidateFlights(result.data.loggedFlights, result.data.invoices);
                 console.log('Flights consolidated:', flights);
     
                 console.log('Matching invoices...');
-                matchInvoices(flights, result.data.invoices || []);
+                matchInvoices(flights, result.data.invoices);
                 console.log('Invoices matched with flights:', flights);
     
                 console.log('Organizing data by aircraft...');
-                const organizedData = organizeDataByAircraft(flights || {});
+                const organizedData = organizeDataByAircraft(flights);
                 console.log('Data organized by aircraft:', organizedData);
     
                 setAircraftData(organizedData);
@@ -55,6 +55,7 @@ const ChartComponent = () => {
     
         fetchData();
     }, []);
+    
     
 
     if (error) {

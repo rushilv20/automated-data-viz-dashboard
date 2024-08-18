@@ -4,8 +4,23 @@ export const parseDate = dateString => {
 };
 
 export const consolidateFlights = (flights, invoices) => {
+    console.log('Invoices:', invoices);
+    console.log('Flights:', flights);
+
     const flightData = {};
-    const invoicedTrips = new Set(invoices.map(invoice => invoice.Trip).filter(trip => invoices.find(invoice => invoice.Trip === trip && invoice.Status === 'Invoiced')));
+
+    if (!invoices || !flights) {
+        console.error('Invoices or Flights data is missing');
+        return flightData; // return empty object to avoid further issues
+    }
+
+    const invoicedTrips = new Set(
+        invoices
+            .map(invoice => invoice.Trip)
+            .filter(trip => invoices.some(invoice => invoice.Trip === trip && invoice.Status === 'Invoiced'))
+    );
+
+    console.log('Invoiced Trips:', invoicedTrips);
 
     flights.forEach(flight => {
         if (!invoicedTrips.has(flight.Trip)) return;
@@ -30,8 +45,11 @@ export const consolidateFlights = (flights, invoices) => {
         }
     });
 
+    console.log('Consolidated Flight Data:', flightData);
+
     return flightData;
 };
+
 
 export const matchInvoices = (flights, invoices) => {
     invoices.forEach(invoice => {
