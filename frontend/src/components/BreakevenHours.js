@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
 import { fixedCosts, variableCosts } from './constants';
+import { breakevenPrices } from './constants'; // Import breakeven prices
 
 const BreakevenHours = ({ aircraftData, selectedAircrafts, selectedMonthYear }) => {
     const chartRef = useRef(null);
@@ -24,9 +25,18 @@ const BreakevenHours = ({ aircraftData, selectedAircrafts, selectedMonthYear }) 
                     return totalHours;
                 }, 0);
 
-                const revenuePerHour = flightHours > 0 ? aircraftData[aircraft].totalPrice / flightHours : 0;
+                // Retrieve Revenue per Hour from the breakevenPrices constant
+                const revenuePerHour = breakevenPrices[monthLabel]?.[aircraft];
+                if (!revenuePerHour) {
+                    console.warn(`Revenue per Hour not found for aircraft ${aircraft} in ${monthLabel}`);
+                    return;
+                }
+
                 const contributionMargin = revenuePerHour - (variableCosts[monthLabel][aircraft] || 0);
                 const breakevenHours = contributionMargin > 0 ? (fixedCosts[monthLabel][aircraft] || 0) / contributionMargin : null;
+
+                // Log the total flight hours and breakeven hours for debugging
+                console.log(`Aircraft: ${aircraft}, Total Flight Hours: ${flightHours}, Breakeven Hours: ${breakevenHours}`);
 
                 filteredData[aircraft] = {
                     flightHours,
