@@ -19,14 +19,14 @@ const BreakevenHours = ({ aircraftData, selectedAircrafts, selectedMonthYear }) 
                 const flightHours = Object.keys(aircraftData[aircraft]).reduce((totalHours, date) => {
                     const dateObj = new Date(date);
                     if (dateObj >= new Date(selectedYear, selectedMonth - 1, 1) && dateObj <= new Date(selectedYear, selectedMonth, 0)) {
-                        return totalHours + (aircraftData[aircraft][date].FlightHrs || 0);
+                        return totalHours + (aircraftData[aircraft][date]?.FlightHrs || 0);
                     }
                     return totalHours;
                 }, 0);
 
                 const revenuePerHour = flightHours > 0 ? aircraftData[aircraft].totalPrice / flightHours : 0;
-                const contributionMargin = revenuePerHour - (variableCosts[monthLabel][aircraft] || 0);
-                const breakevenHours = contributionMargin > 0 ? (fixedCosts[monthLabel][aircraft] || 0) / contributionMargin : null;
+                const contributionMargin = revenuePerHour - (variableCosts[monthLabel]?.[aircraft] || 0);
+                const breakevenHours = contributionMargin > 0 ? (fixedCosts[monthLabel]?.[aircraft] || 0) / contributionMargin : null;
 
                 filteredData[aircraft] = {
                     flightHours,
@@ -83,11 +83,7 @@ const BreakevenHours = ({ aircraftData, selectedAircrafts, selectedMonthYear }) 
         });
     }, [aircraftData, selectedAircrafts, selectedMonthYear]);
 
-    return (
-        <div className="chart-container">
-            <canvas ref={chartRef} width="400" height="400"></canvas> {/* Adjust width and height here */}
-        </div>
-    );
+    return <div className="chart-container"><canvas ref={chartRef} width="1000" height="600"></canvas></div>; // Adjust width and height here
 };
 
 export default BreakevenHours;
