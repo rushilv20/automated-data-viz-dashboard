@@ -7,15 +7,6 @@ from decimal import Decimal, InvalidOperation
 import math
 import concurrent.futures
 
-# AWS and credentials setup
-AWS_ACCESS_KEY_ID = 'AKIATCKAMY4NZ77DVGVP'
-AWS_SECRET_ACCESS_KEY = '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'
-AWS_DEFAULT_REGION = 'us-east-1'
-DYNAMODB_TABLE_NAME = 'Invoices'
-
-# Portal credentials
-USERNAME = "rvegada@flybellair.com"
-PASSWORD = "Rushil@201220"
 
 # URL generation
 def encode_date(date_string):
