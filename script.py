@@ -8,10 +8,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 
-# Your credentials
-username = "rvegada@flybellair.com"
-password = "Rushil@201220"
-
 # URLs
 login_url = "https://portal.jetinsight.com/users/sign_in"
 excel_url = "https://portal.jetinsight.com/analytics/trip_finance?stage=&search=&date_to_filter=depart_date_zulu&search_startdate=04%2F01%2F2024&search_enddate=05%2F25%2F2024&query_builder_json="
