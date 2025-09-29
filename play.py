@@ -8,10 +8,6 @@ from datetime import datetime
 username = ""
 password = ""
 
-# Set AWS credentials
-os.environ['AWS_ACCESS_KEY_ID'] = 'AKIATCKAMY4NZ77DVGVP'
-os.environ['AWS_SECRET_ACCESS_KEY'] = '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'
-os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
 
 # S3 bucket name
 bucket_name = 'bellairdatabucket'
